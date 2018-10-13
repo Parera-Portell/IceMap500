@@ -17,6 +17,7 @@ Quality assessment has shown this algorithm produces sea ice presence maps syste
 accuracy levels are not guaranteed when processing other regions.
 
 This algorithm is distributed as a Python script built to work with ArcGIS 10.5. Some additional software is required:
+
 -MODIS Reprojection Tool Swath, https://lpdaac.usgs.gov/tools/modis_reprojection_tool_swath.
 
 -CCRS downscaling and reprojection tools, ftp://ftp.ccrs.nrcan.gc.ca/ad/CCRS_CANADA/Software/Compositing_V5.5.
