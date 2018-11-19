@@ -1,4 +1,4 @@
-# revised-icemap250
+# Revised IceMap250
 A modified version of IceMap250 (Gignac et al., 2017) with new features to generate accurate sea ice extent maps from MODIS visible and infrared data.
 
 References: Gignac, C., Bernier, M., Chokmani, K., and Poulin, J.: IceMap250- Automatic 250 m Sea Ice Extent Mapping Using MODIS
