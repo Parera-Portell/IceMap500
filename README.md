@@ -5,7 +5,7 @@ References: Gignac, C., Bernier, M., Chokmani, K., and Poulin, J.: IceMap250- Au
 Data, Remote Sensing, 9, https://doi.org/10.3390/rs9010070, 2017.
 
 Associated datasets: Parera-Portell, J.A., Ubach, R.  European-IceMap250 sea ice extent maps (2000-2017). Universitat Autònoma de
-Barcelona, https://ddd.uab.cat/record/196007?ln=en, 2018.
+Barcelona,  https://doi.org/10.5565/ddd.uab.cat/196007, 2018.
 
 ***********************************************************************************************************************************
 
