@@ -22,4 +22,4 @@ This algorithm is distributed as a Python script built to work with ArcGIS 10.5.
 
 -CCRS downscaling and reprojection tools, ftp://ftp.ccrs.nrcan.gc.ca/ad/CCRS_CANADA/Software/Compositing_V5.5.
 
-Instructions on how to run the script and required data are detailed in the py file. It will only work with MODIS L1B data.
+Instructions on how to run the script and required data are detailed in the py file. Works with MODIS L1B data.
