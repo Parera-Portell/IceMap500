@@ -35,9 +35,9 @@ mrt_folder = ""          #location of NASA's MRTSwath bin directory. Available
 
 Projection parameters:
 -The output projection is WGS84 Lambert Conformal Conic (spheroid = 6378137.0,
- 298.257223563). It cannot be changed as it is the only projection the CCRS
- reprojection tool supports without eventually crashing. Bear in mind that to
- quantify sea ice extent, maps must be in an equal-area projection.
+ 298.257223563). It cannot be changed as other projections might cause the
+ CCRS tool to crash. Bear in mind that to quantify sea ice extent, maps must 
+ be in an equal-area projection.
  The following variables must be set by the user (default decimal separator is 
  ".", be sure to change the rest of the projection parameters in the script if 
  your separator in ArcGis is ",")-
