@@ -18,8 +18,10 @@ accuracy levels are not guaranteed when processing other regions.
 
 This algorithm is distributed as a Python script built to work with ArcGIS 10.5. Some additional software is required:
 
--MODIS Reprojection Tool Swath, https://lpdaac.usgs.gov/tools/modis_reprojection_tool_swath.
+-MODIS Reprojection Tool Swath, https://lpdaac.usgs.gov/tools/modis_reprojection_tool_swath.***
 
 -CCRS downscaling and reprojection tools, ftp://ftp.ccrs.nrcan.gc.ca/ad/CCRS_CANADA/Software/Compositing_V5.5.
 
 Instructions on how to run the script and required data are detailed in the py file. Works with MODIS L1B data.
+
+***As of February 28, 2019 MRT and MRTSwath tools are no longer supported and cannot be donwloaded anymore. We are working to replace it with HEG Tools (https://newsroom.gsfc.nasa.gov/sdptoolkit/HEG/HEGHome.html).
