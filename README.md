@@ -15,7 +15,7 @@ Quality assessment has shown this algorithm produces sea ice presence maps syste
 
 This algorithm is distributed as a Python 3 script, requiring common libraries such as numpy, gdal, and jenkspy, alongside the WhiteboxTools Python geoprocessing utilities. Additional software is required to project MODIS swath data and correct the bowtie effect:
 
--NASA HEG Tool, https://newsroom.gsfc.nasa.gov/sdptoolkit/HEG/HEGHome.html
+-HEG Tool, https://newsroom.gsfc.nasa.gov/sdptoolkit/HEG/HEGHome.html
 
 Instructions on how to run the script and required data are detailed in the py file.
 Inputs are MOD021KM, MOD02HKM and MOD35_L2 hdf files.
