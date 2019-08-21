@@ -1,5 +1,5 @@
-# Revised IceMap250
-A modified version of IceMap250 (Gignac et al., 2017) with new features to generate accurate sea ice extent maps from MODIS visible and infrared data.
+# IceMap500
+A sea ice detection algorithm based on IceMap250 (Gignac et al., 2017) with new features to generate accurate sea ice extent maps from MODIS visible and infrared data at 500 m resolution at nadir.
 
 References: Gignac, C., Bernier, M., Chokmani, K., and Poulin, J.: IceMap250- Automatic 250 m Sea Ice Extent Mapping Using MODIS
 Data, Remote Sensing, 9, https://doi.org/10.3390/rs9010070, 2017.
@@ -9,19 +9,13 @@ Barcelona,  https://doi.org/10.5565/ddd.uab.cat/196007, 2018.
 
 ***********************************************************************************************************************************
 
-Aiming at the creation of a European sea ice extent indicator, a revised version of the previous IceMap250 has been created, using
-MODIS downscaled imagery to generate sea ice extent maps at 250 m resolution at nadir. Changes in the classification approach
-adapted to the particularities of the European Arctic and a new method to correct NISE artefacts in the MODIS cloud mask allow the
+Aiming at the creation of a European sea ice extent indicator, an improved sea ice detection algorithm has been created, mainly based on the classification process used in IceMap250. A new method to correct the effects NISE artefacts in the MODIS cloud mask and additional threshold tests allow the
 enlargement of the mapped area, the reduction of potential error sources and a qualitative improvement of the resulting maps.
-Quality assessment has shown this algorithm produces sea ice presence maps systematically achieving accuracies above 90 %. Such
-accuracy levels are not guaranteed when processing other regions.
+Quality assessment has shown this algorithm produces sea ice presence maps systematically achieving accuracies above 90 % (tested in the European Arctic).
 
-This algorithm is distributed as a Python script built to work with ArcGIS 10.5. Some additional software is required:
+This algorithm is distributed as a Python 3 script, requiring common libraries such as numpy, gdal, and jenkspy, alongside the WhiteboxTools Python geoprocessing utilities. Additional software is required to project MODIS swath data and correct the bowtie effect:
 
--MODIS Reprojection Tool Swath, https://lpdaac.usgs.gov/tools/modis_reprojection_tool_swath.***
+-NASA HEG Tool, https://newsroom.gsfc.nasa.gov/sdptoolkit/HEG/HEGHome.html
 
--CCRS downscaling and reprojection tools, ftp://ftp.ccrs.nrcan.gc.ca/ad/CCRS_CANADA/Software/Compositing_V5.5.
-
-Instructions on how to run the script and required data are detailed in the py file. Works with MODIS L1B data.
-
-***As of February 28, 2019 MRT and MRTSwath tools are no longer supported and cannot be donwloaded anymore. We are working to replace it with HEG Tools (https://newsroom.gsfc.nasa.gov/sdptoolkit/HEG/HEGHome.html).
+Instructions on how to run the script and required data are detailed in the py file.
+Inputs are MOD021KM, MOD02HKM and MOD35_L2 hdf files.
