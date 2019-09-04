@@ -398,6 +398,7 @@ def step2(y,m,d):
     # Emissive bands
     for mod in mod021km:
         mask = masks+"/"+y+"/"+m+"/"+mod[-35:-22]+".mod35.tif"
+        seareg = masks+"/"+y+"/"+m+"/"+mod[-35:-22]+".seareg_clip.shp"
         if os.path.exists(mask):
             band20 = bands+"/"+y+"/"+m+"/"+mod[-35:-22]+".B20.tif"
             band32 = bands+"/"+y+"/"+m+"/"+mod[-35:-22]+".B32.tif"
