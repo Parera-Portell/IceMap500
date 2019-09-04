@@ -304,12 +304,15 @@ def step1(y,m,d):
                 mod35_array, _, _, _, _ = openraster(mod35, np.uint16)
                 _ = None
                 # Conditional operations to obtain mask
+                # 0 = clouds, 1 = clear, 2 = sun glint, 255 = land
                 con1 = (cloud_array == 1) & (night_array == 1)
                 con2 = (glint_array == 1) & (sea_array == 1)
                 con3 = (cloud_array == 0) & (sea_array == 1)
                 con4 = con3 & (mod35_array != 0) & (night_array == 1)
+                con5 = con3 & (mod35_array != 0) & (night_array == 0)
                 con = con1 & con2
                 clouds = np.where(con4, 0, 255)
+                clouds = np.where(con5, 2, clouds)
                 mask_array = np.where(con, 1, clouds)
                 closeraster(mask_array, mask, ncols, nrows, gdal.GDT_Byte, 255, 
                             trans)
@@ -440,6 +443,7 @@ def step3(y,m,d):
             score = (index-mean)/std
             vis = np.where(con, score*1000, 65535)
             # Classification
+            # 0 = cloud, 1 = clear
             con3 = np.where(vis <= 500, 1, 0)
             vis_array = np.where(vis != 65535, con3, 255)
             closeraster(vis_array, vismask, ncols, nrows, gdal.GDT_Byte, 255, 
@@ -484,6 +488,7 @@ def step4(y,m,d):
             case2 = test & (ndsii >= breaks)
             case3 = (test == False) & (ndsii < breaks)
             # Classification
+            # 0 = water, 1 = ice, 255 = nodata
             con = case1 ^ case2
             maparray = np.where(con, 1, 0)
             con = (maparray == 0) & case3
@@ -555,6 +560,7 @@ def step5(y,m,d):
             test = (b7_array <= 300) & (b4_array >= 1700) & (b20_array <= 28800)
             test = test & (tmp2_array == 1) & (tmp_array == 0) & (m35_array != 0)
             # Classification
+            # 0 = water, 1 = ice, 255 = nodata
             maparray = np.where(test, 1, 255)
             con = (maparray == 255) & (tmp_array == 1)
             maparray = np.where(con, 1, maparray)
@@ -605,6 +611,7 @@ def step6(y,m,d):
             case2 = (b4_array >= 1700) & (ndsii >= breaks)
             case3 = ((b4_array >= 1700) == False) & (ndsii < breaks)
             # Classification
+            # 0 = water, 1 = ice, 255 = nodata
             con = case1 ^ case2
             maparray = np.where(con, 1, 0)
             con1 = (maparray == 0) & case3
@@ -635,6 +642,7 @@ def step7(y,m,d):
             m35_array, _, _, _, _ = openraster(mask, np.uint16)
             _ = None
             # Classification
+            # 0 = water, 1 = ice, 254 = nodata, 255 = land
             case1 = (m_array == 1) & (v_array == 1)
             test1 = (m_array == 1) & (v_array == 0)
             test2 = (m_array == 0) & (v_array == 0)
