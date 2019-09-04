@@ -654,7 +654,7 @@ def step7(y,m,d):
  
 def step8(y,m,d):
     infolder = composites+"/"+y+"/"+m
-    maplist = glob.glob(infolder+"/A"+y+d+".????.mod35map_c.tif")
+    maplist = glob.glob(infolder+"/A"+y+d+".????.composite.tif")
     dailymap = composites+"/"+y+"/"+m+"/A"+y+d+".daily.tif"
     
     # Set the same spatial extent to all composite maps
