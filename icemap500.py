@@ -15,17 +15,16 @@ Based on the IceMap250 algorithm (Gignac et al., 2017).
 
 
 #**************************USER-DEFINED VARIABLES******************************
-month_list = [3, 9]
-#year_list = list(range(2000, 2020))
-year_list = [2019]
-studyarea = "/mnt/Dades/Feina/Dades/seaice/searegions/searegions.shp"
-hdfs = "/mnt/Dades/Feina/Dades/seaice/data"
-bands = "/mnt/Dades/Feina/Dades/seaice/bands"
-masks = "/mnt/Dades/Feina/Dades/seaice/masks"
-maskedmaps = "/mnt/Dades/Feina/Dades/seaice/maskedmaps"
-composites = "/mnt/Dades/Feina/Dades/seaice/composites"
-workfolder = "/mnt/Dades/Feina/Dades/seaice/workfolder"
-heg_bin = "/home/joanan/Aplicacions/heg/bin"
+month_list = []
+year_list = []
+studyarea = ""
+hdfs = ""
+bands = ""
+masks = ""
+maskedmaps = ""
+composites = ""
+workfolder = ""
+heg_bin = ""
 #******************************************************************************
 
 
@@ -309,7 +308,7 @@ def step1(y,m,d):
                 con2 = (glint_array == 1) & (sea_array == 1)
                 con3 = (cloud_array == 0) & (sea_array == 1)
                 con4 = con3 & (mod35_array != 0) & (night_array == 1)
-                con5 = con3 & (mod35_array != 0) & (night_array == 0)
+                con5 = (sea_array == 1) & (mod35_array != 0) & (night_array == 0)
                 con = con1 & con2
                 clouds = np.where(con4, 0, 255)
                 clouds = np.where(con5, 2, clouds)
@@ -717,7 +716,9 @@ def step9(y,m):
             array = np.where(array == 255, 65535, array)
             case1 = ((m_array >= 65534) | (m_array == 0)) & (array == 0)
             case2 = (m_array >= 65534) & (array == 65534)
-            case3 = ((m_array == 0) | (m_array == 1)) & (array == 1)
+            con1 = ((m_array >= 0) & (m_array < 65534)) & (array == 1)
+            con2 = ((array >= 0) & (array < 65534))
+            case3 =  con1 & con2
             case4 = (m_array >= 65534) & (array == 1)
             m_array = np.where(case1, 0, m_array)
             m_array = np.where(case2, 65534, m_array)
@@ -747,6 +748,7 @@ def step9(y,m):
         con = (m_array < 65534) & (m_array != 0)
         m_array = np.where(con, 1, m_array)
         # Reclassification
+        # 0 = Nodata, 1 = Water, 2 = ice
         m_array = np.where(m_array == 1, 2, m_array)
         m_array = np.where(m_array == 0, 1, m_array)
         m_array = np.where(m_array == 65534, 0, m_array)
@@ -754,7 +756,8 @@ def step9(y,m):
         # Extent generation
         wbt.euclidean_allocation(tmp, monthlymap)
         os.remove(tmp)
-        m_array, nrows, ncols, trans, _ = openraster(monthlymap, np.uint16)
+        m_array, nrows, _, _, _ = openraster(monthlymap, np.uint16)
+        _ = None
         m_array = np.where(m_array == 65535, 255, m_array)
         closeraster(m_array, monthlymap, ncols, nrows, gdal.GDT_Byte, 255, trans)
         print("Monthly map created.")
@@ -777,9 +780,9 @@ def run():
             step6(y,m,d)
             step7(y,m,d)
             step8(y,m,d)
-#    monthlymap = composites+"/"+y+"/"+m+"/A"+y+".month_"+m+".tif"
-#    if not os.path.exists(monthlymap):
-#        step9(y,m)
+    monthlymap = composites+"/"+y+"/"+m+"/A"+y+".month_"+m+".tif"
+    if not os.path.exists(monthlymap):
+        step9(y,m)
 
 month_days = {1:range(1,32),2:range(32,61),3:range(60,92),4:range(91,122),
               5:range(121,153),6:range(152,183),7:range(182,214),
