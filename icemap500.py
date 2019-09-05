@@ -71,7 +71,7 @@ def checkfiles(y,m,d):
 
 def planck(radiance, wvln):
     # This function calculates brightness temperature (wvln in micrometers)
-    # using the Inverse Plack Function.
+    # using the Inverse Planck Function.
     c1 = 1.191042e8
     c2 = 1.4387752e4
     t = c2/(wvln*np.log(1+(c1/(radiance*wvln**5))))
