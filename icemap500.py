@@ -29,10 +29,10 @@ heg_bin = ""
 
 
 # Import modules
-import gdal, osr, os, subprocess, glob, jenkspy
+import numpy as np
+import glob, gdal, jenkspy, os, osr, subprocess
 from WBT.whitebox_tools import WhiteboxTools
 wbt = WhiteboxTools()
-import numpy as np
 
 
 #***************************SUPPLEMENTARY FUNCTIONS***************************#
@@ -476,13 +476,13 @@ def step4(y,m,d):
             classes = jenkspy.jenks_breaks(sample, 2)
             breaks = classes[1]
             # Conversion to sea surface temperature
-            formula = np.round(1.01342+1.04948*b20_array, decimals=0)
+            formula = 1.01342+1.04948*(b20_array/100-273.15)
             b20_array = np.where(b20_array != 65535, formula, 65535)
             # Exclusion of nodata areas
             con = (b4_array != 65535) & (b20_array != 65535) & (ndsii != 65535)
             data = con & (m_array == 1)
             # Classification outcomes
-            test = (b20_array <= 28800) & (b4_array >= 1700)
+            test = (b20_array <= 5) & (b4_array >= 1700)
             case1 = test & (ndsii < breaks)
             case2 = test & (ndsii >= breaks)
             case3 = (test == False) & (ndsii < breaks)
@@ -550,13 +550,13 @@ def step5(y,m,d):
             m_array, _, _, _, _ = openraster(mod35, np.uint16)
             _ = None
             # Conversion of B20 to sea surface temperature
-            formula = np.round(1.01342+1.04948*b20_array, decimals=0)
+            formula = 1.01342+1.04948*(b20_array/100-273.15)
             b20_array = np.where(b20_array != 65535, formula, 65535)
             # Exclusion of nodata areas
             con = (b4_array != 65535) & (b7_array != 65535) & (b20_array != 65535)
             data = con & (m_array < 255)
             # Classification outcomes
-            test = (b7_array <= 300) & (b4_array >= 1700) & (b20_array <= 28800)
+            test = (b7_array <= 300) & (b4_array >= 1700) & (b20_array <= 5)
             test = test & (tmp2_array == 1) & (tmp_array == 0) & (m35_array != 0)
             # Classification
             # 0 = water, 1 = ice, 255 = nodata
