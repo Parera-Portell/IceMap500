@@ -13,26 +13,51 @@ Based on the IceMap250 algorithm (Gignac et al., 2017).
 *******************************************************************************
 """
 
-
-#**************************USER-DEFINED VARIABLES******************************
-month_list = []
-year_list = []
-studyarea = ""
-hdfs = ""
-bands = ""
-masks = ""
-maskedmaps = ""
-composites = ""
-workfolder = ""
-heg_bin = ""
-#******************************************************************************
-
-
 # Import modules
 import numpy as np
-import glob, gdal, jenkspy, os, osr, subprocess
+import glob, gdal, jenkspy, os, osr, subprocess, sys
 from WBT.whitebox_tools import WhiteboxTools
 wbt = WhiteboxTools()
+
+
+#**************************USER-DEFINED VARIABLES******************************
+month_list = input("Months (numbers separated by commas): ").split(",")
+try:
+    month_list = [int(x) for x in month_list]
+except:
+    print("Months not recognized. Exiting...")
+    sys.exit()
+    
+year_list = input("Years (separated by commas): ").split(",")
+try:
+    year_list = [int(x) for x in year_list]
+except:
+    print("Years not recognized. Exiting...")
+    sys.exit()
+    
+studyarea = input("Enter path to study area shapefile: ")
+if not os.path.exists(studyarea):
+    print("Study area shapefile not found. Exiting...")
+    sys.exit()
+    
+heg_bin = input("Enter path to HEG bin folder: ")
+if not os.path.exists(heg_bin):
+    print("HEG bin not found. Exiting...")
+    sys.exit()
+    
+out_folder = input("Enter directory where data will be stored: ")
+if not os.path.exists(out_folder):
+    print("Output directory not found. Exiting...")
+    sys.exit()
+
+#*********************************FOLDERS*************************************#
+
+hdfs = out_folder+"/data"
+bands = out_folder+"/bands"
+masks = out_folder+"/masks"
+maskedmaps = out_folder+"/maskedmaps"
+composites = out_folder+"/composites"
+workfolder = out_folder+"/workfolder"
 
 
 #***************************SUPPLEMENTARY FUNCTIONS***************************#
@@ -434,6 +459,7 @@ def step3(y,m,d):
             _ = None
             # Calculation of normalized difference
             con = (b32_array != 65535) & (b20_array != 65535) & (m_array <= 1)
+            con = con & (b20_array + b32_array != 0)
             formula = (b20_array - b32_array)/(b20_array + b32_array)
             index = np.where(con, formula, np.nan)
             # Calculation of standard score
@@ -470,6 +496,7 @@ def step4(y,m,d):
             _ = None
             # Calculation of NDSII-2 and Jenks breaks
             con = (b2_array != 65535) & (b4_array != 65535) & (m_array == 1)
+            con = con & (b2_array + b4_array != 0)
             formula = (b4_array - b2_array)/(b4_array + b2_array)
             ndsii = np.where(con, formula, 65535)
             sample = np.random.choice(ndsii[ndsii != 65535],50000)
@@ -482,7 +509,7 @@ def step4(y,m,d):
             con = (b4_array != 65535) & (b20_array != 65535) & (ndsii != 65535)
             data = con & (m_array == 1)
             # Classification outcomes
-            test = (b20_array <= 5) & (b4_array >= 1700)
+            test = (b20_array <= 2) & (b4_array >= 1700) # SST + green refl.
             case1 = test & (ndsii < breaks)
             case2 = test & (ndsii >= breaks)
             case3 = (test == False) & (ndsii < breaks)
@@ -529,7 +556,7 @@ def step5(y,m,d):
                 elif i == 0:
                     val_dict[i] = 0
                 else: 
-                    if val_dict[i] > 250:
+                    if val_dict[i] >= 250:
                         val_dict[i] = 1
                     elif val_dict[i] < 250:
                         val_dict[i] = 0
@@ -556,7 +583,7 @@ def step5(y,m,d):
             con = (b4_array != 65535) & (b7_array != 65535) & (b20_array != 65535)
             data = con & (m_array < 255)
             # Classification outcomes
-            test = (b7_array <= 300) & (b4_array >= 1700) & (b20_array <= 5)
+            test = (b7_array <= 350) & (b4_array >= 1700) & (b20_array <= 2)
             test = test & (tmp2_array == 1) & (tmp_array == 0) & (m35_array != 0)
             # Classification
             # 0 = water, 1 = ice, 255 = nodata
@@ -598,6 +625,7 @@ def step6(y,m,d):
             _ = None
             # Calculation of NDSII-2 and Jenks breaks
             con = (b2_array != 65535) & (b4_array != 65535) & (v_array == 1)
+            con = con & (b2_array + b4_array != 0)
             formula = (b4_array - b2_array)/(b4_array + b2_array)
             ndsii = np.where(con, formula, 65535)
             sample = np.random.choice(ndsii[ndsii != 65535],50000)
