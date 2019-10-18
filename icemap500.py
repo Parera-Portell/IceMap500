@@ -453,8 +453,8 @@ def step3(y,m,d):
         vismask = masks+"/"+y+"/"+m+"/"+band20[-21:-8]+".vis.tif"
         
         if not os.path.exists(vismask) and os.path.exists(band32):
-            b20_array, nrows, ncols, trans, _ = openraster(band20, np.uint16)
-            b32_array, _, _, _, _ = openraster(band32, np.uint16)
+            b20_array, nrows, ncols, trans, _ = openraster(band20, np.single)
+            b32_array, _, _, _, _ = openraster(band32, np.single)
             m_array, _, _, _, _ = openraster(mask, np.uint16)
             _ = None
             # Calculation of normalized difference
@@ -491,42 +491,44 @@ def step4(y,m,d):
         if not os.path.exists(mod35map):
             b2_array, nrows, ncols, trans, _ = openraster(band2, np.single)
             b4_array, _, _, _, _ = openraster(band4, np.single)
-            b20_array, _, _, _, _ = openraster(band20, np.uint16)
+            b20_array, _, _, _, _ = openraster(band20, np.single)
             m_array, _, _, _, _ = openraster(mod35, np.uint16)
             _ = None
             # Calculation of NDSII-2 and Jenks breaks
             con = (b2_array != 65535) & (b4_array != 65535) & (m_array == 1)
-            con = con & (b2_array + b4_array != 0)
             formula = (b4_array - b2_array)/(b4_array + b2_array)
             ndsii = np.where(con, formula, 65535)
-            sample = np.random.choice(ndsii[ndsii != 65535],50000)
-            classes = jenkspy.jenks_breaks(sample, 2)
-            breaks = classes[1]
-            # Conversion to sea surface temperature
-            formula = 1.01342+1.04948*(b20_array/100-273.15)
-            b20_array = np.where(b20_array != 65535, formula, 65535)
-            # Exclusion of nodata areas
-            con = (b4_array != 65535) & (b20_array != 65535) & (ndsii != 65535)
-            data = con & (m_array == 1)
-            # Classification outcomes
-            test = (b20_array <= 2) & (b4_array >= 1700) # SST + green refl.
-            case1 = test & (ndsii < breaks)
-            case2 = test & (ndsii >= breaks)
-            case3 = (test == False) & (ndsii < breaks)
-            # Classification
-            # 0 = water, 1 = ice, 255 = nodata
-            con = case1 ^ case2
-            maparray = np.where(con, 1, 0)
-            con = (maparray == 0) & case3
-            maparray = np.where(con, 255, maparray)
-            maparray = np.where(data, maparray, 255)
-            if maparray.min() < 255:
-                closeraster(maparray, mod35map, ncols, nrows, gdal.GDT_Byte, 
-                            255, trans)
-                print("MOD35 map created.")
-            else:
+            try:
+                sample = np.random.choice(ndsii[ndsii != 65535],50000)
+                classes = jenkspy.jenks_breaks(sample, 2)
+                breaks = classes[1]
+                # Conversion to sea surface temperature
+                formula = 1.01342+1.04948*(b20_array/100-273.15)
+                b20_array = np.where(b20_array != 65535, formula, 65535)
+                # Exclusion of nodata areas
+                con = (b4_array != 65535) & (b20_array != 65535)
+                data = con & (m_array == 1) & (ndsii != 65535)
+                # Classification outcomes
+                test = (b20_array <= 1) & (b4_array >= 1700) # SST + green refl.
+                case1 = test & (ndsii < breaks)
+                case2 = test & (ndsii >= breaks)
+                case3 = (test == False) & (ndsii < breaks)
+                # Classification
+                # 0 = water, 1 = ice, 255 = nodata
+                con = case1 ^ case2
+                maparray = np.where(con, 1, 0)
+                con = (maparray == 0) & case3
+                maparray = np.where(con, 255, maparray)
+                maparray = np.where(data, maparray, 255)
+                if maparray.min() < 255:
+                    closeraster(maparray, mod35map, ncols, nrows, gdal.GDT_Byte, 
+                                255, trans)
+                    print("MOD35 map created.")
+                else:
+                    print("MOD35 map is all nodata.")
+            except:
                 print("MOD35 map is all nodata.")
-            
+                
   
 #****************************STEP5: MOD35 CORRECTION**************************# 
             
@@ -535,6 +537,7 @@ def step5(y,m,d):
     maplist = glob.glob(infolder+"/A"+y+d+".????.mod35map.tif")
     
     for mod35map in maplist:
+        band2 = bands+"/"+y+"/"+m+"/"+mod35map[-26:-13]+".B2.tif"
         band4 = bands+"/"+y+"/"+m+"/"+mod35map[-26:-13]+".B4.tif"
         band7 = bands+"/"+y+"/"+m+"/"+mod35map[-26:-13]+".B7.tif"
         band20 = bands+"/"+y+"/"+m+"/"+mod35map[-26:-13]+".B20.tif"
@@ -545,6 +548,7 @@ def step5(y,m,d):
         m35_array, nrows, ncols, trans, _ = openraster(mod35map, np.uint16)
         
         if not os.path.exists(correction) and np.any(m35_array == 1):
+            n=0
             # Deletion of small sea ice clusters
             wbt.clump(mod35map, tmp, diag=True, zero_back=True)
             clump, nrows, ncols, trans, _ = openraster(tmp, np.int32)
@@ -556,10 +560,10 @@ def step5(y,m,d):
                 elif i == 0:
                     val_dict[i] = 0
                 else: 
-                    if val_dict[i] >= 250:
+                    if val_dict[i] >= 100:
                         val_dict[i] = 1
-                    elif val_dict[i] < 250:
-                        val_dict[i] = 0
+                    elif val_dict[i] < 100:
+                        val_dict[i] = 0             
             # Map reclassification
             for i in range(nrows):
                 for e in range(ncols):
@@ -569,11 +573,12 @@ def step5(y,m,d):
             closeraster(reclass, tmp, ncols, nrows, gdal.GDT_UInt16, 65535, trans)
             # Calculation of distance buffer
             wbt.buffer_raster(tmp, tmp2, 35000, gridcells=False)
-            b4_array, _, _, _, _ = openraster(band4, np.uint16)
-            b7_array, _, _, _, _ = openraster(band7, np.uint16)
-            b20_array, _, _, _, _ = openraster(band20, np.uint16)
-            tmp_array, _, _, _, _ = openraster(tmp, np.uint16)
-            tmp2_array, _, _, _, _ = openraster(tmp2, np.uint16)
+            b2_array, _, _, _, _ = openraster(band2, np.single)
+            b4_array, _, _, _, _ = openraster(band4, np.single)
+            b7_array, _, _, _, _ = openraster(band7, np.single)
+            b20_array, _, _, _, _ = openraster(band20, np.single)
+            tmp_array, _, _, _, _ = openraster(tmp, np.single)
+            tmp2_array, _, _, _, _ = openraster(tmp2, np.single)
             m_array, _, _, _, _ = openraster(mod35, np.uint16)
             _ = None
             # Conversion of B20 to sea surface temperature
@@ -582,23 +587,50 @@ def step5(y,m,d):
             # Exclusion of nodata areas
             con = (b4_array != 65535) & (b7_array != 65535) & (b20_array != 65535)
             data = con & (m_array < 255)
+            # Calculation of NDSII-2 and Jenks breaks
+            formula = (b4_array - b2_array)/(b4_array + b2_array)
+            ndsii = np.where(con, formula, 65535)
+            # Restriction of ndsii sample to obtain Jenks breaks
+            try:
+                con1 = con & (b7_array <= 100) & (tmp2_array == 1)
+                ndsii_s = np.where(con1, ndsii, 65535)
+                sample = np.random.choice(ndsii_s[ndsii_s != 65535],50000)
+                classes = jenkspy.jenks_breaks(sample, 2)
+                breaks = classes[1]
+            except:
+                try:
+                    con1 = con & (tmp2_array == 1)
+                    ndsii_s = np.where(con1, ndsii, 65535)
+                    sample = np.random.choice(ndsii_s[ndsii_s != 65535],50000)
+                    classes = jenkspy.jenks_breaks(sample, 2)
+                    breaks = classes[1]
+                except:
+                    # Rasters with no pixels available for correction
+                    closeraster(m35_array, correction, ncols, nrows, 
+                                gdal.GDT_Byte, 255, trans)
+                    os.remove(tmp)
+                    os.remove(tmp2)
+                    print("MOD35 artefacts corrected.")
+                    n=1    
             # Classification outcomes
-            test = (b7_array <= 350) & (b4_array >= 1700) & (b20_array <= 2)
-            test = test & (tmp2_array == 1) & (tmp_array == 0) & (m35_array != 0)
-            # Classification
-            # 0 = water, 1 = ice, 255 = nodata
-            maparray = np.where(test, 1, 255)
-            con = (maparray == 255) & (tmp_array == 1)
-            maparray = np.where(con, 1, maparray)
-            con = (maparray == 255) & (m35_array == 0)
-            maparray = np.where(con, 0, maparray)
-            maparray = np.where(data, maparray, 255)
-            closeraster(maparray, correction, ncols, nrows, gdal.GDT_Byte, 255, 
-                        trans)
-            print("MOD35 artefacts corrected.")
-            os.remove(tmp)
-            os.remove(tmp2)
-        
+            if n == 0:
+                test = (b7_array <= 350) & (b4_array >= 1700) & (b20_array <= 1)
+                test = test & (tmp2_array == 1) & (tmp_array == 0)
+                test = test & (ndsii < breaks) & (m35_array != 0)
+                # Classification
+                # 0 = water, 1 = ice, 255 = nodata
+                maparray = np.where(test, 1, 255)
+                con = (maparray == 255) & (tmp_array == 1)
+                maparray = np.where(con, 1, maparray)
+                con = (maparray == 255) & (m35_array == 0)
+                maparray = np.where(con, 0, maparray)
+                maparray = np.where(data, maparray, 255)
+                closeraster(maparray, correction, ncols, nrows, gdal.GDT_Byte,
+                            255, trans)
+                print("MOD35 artefacts corrected.")
+                os.remove(tmp)
+                os.remove(tmp2)
+                
         elif not os.path.exists(correction) and not np.any(m35_array == 1):
             closeraster(m35_array, correction, ncols, nrows, gdal.GDT_Byte, 255, 
                         trans)
@@ -625,30 +657,32 @@ def step6(y,m,d):
             _ = None
             # Calculation of NDSII-2 and Jenks breaks
             con = (b2_array != 65535) & (b4_array != 65535) & (v_array == 1)
-            con = con & (b2_array + b4_array != 0)
             formula = (b4_array - b2_array)/(b4_array + b2_array)
             ndsii = np.where(con, formula, 65535)
-            sample = np.random.choice(ndsii[ndsii != 65535],50000)
-            classes = jenkspy.jenks_breaks(sample, 2)
-            breaks = classes[1]
-            # Exclusion of nodata areas
-            data = (b4_array != 65535) & (ndsii != 65535) & (v_array == 1)
-            # Classification outcomes
-            case1 = (b4_array >= 1700) & (ndsii < breaks)
-            case2 = (b4_array >= 1700) & (ndsii >= breaks)
-            case3 = ((b4_array >= 1700) == False) & (ndsii < breaks)
-            # Classification
-            # 0 = water, 1 = ice, 255 = nodata
-            con = case1 ^ case2
-            maparray = np.where(con, 1, 0)
-            con1 = (maparray == 0) & case3
-            maparray = np.where(con1, 255, maparray)
-            maparray = np.where(data, maparray, 255)
-            if maparray.min() < 255:
-                closeraster(maparray, vismap, ncols, nrows, gdal.GDT_Byte, 255, 
-                            trans)
-                print("VIS map created.")
-            else:
+            try:
+                sample = np.random.choice(ndsii[ndsii != 65535],50000)
+                classes = jenkspy.jenks_breaks(sample, 2)
+                breaks = classes[1]
+                # Exclusion of nodata areas
+                data = (b4_array != 65535) & (ndsii != 65535) & (v_array == 1)
+                # Classification outcomes
+                case1 = (b4_array >= 1700) & (ndsii < breaks)
+                case2 = (b4_array >= 1700) & (ndsii >= breaks)
+                case3 = ((b4_array >= 1700) == False) & (ndsii < breaks)
+                # Classification
+                # 0 = water, 1 = ice, 255 = nodata
+                con = case1 ^ case2
+                maparray = np.where(con, 1, 0)
+                con1 = (maparray == 0) & case3
+                maparray = np.where(con1, 255, maparray)
+                maparray = np.where(data, maparray, 255)
+                if maparray.min() < 255:
+                    closeraster(maparray, vismap, ncols, nrows, gdal.GDT_Byte, 
+                                255, trans)
+                    print("VIS map created.")
+                else:
+                    print("VIS map is all nodata.")
+            except:
                 print("VIS map is all nodata.")
             
             
