@@ -50,6 +50,7 @@ if not os.path.exists(out_folder):
     print("Output directory not found. Exiting...")
     sys.exit()
 
+
 #*********************************FOLDERS*************************************#
 
 hdfs = out_folder+"/data"
@@ -515,10 +516,10 @@ def step4(y,m,d):
                 case3 = (test == False) & (ndsii < breaks)
                 # Classification
                 # 0 = water, 1 = ice, 255 = nodata
-                con = case1 ^ case2
-                maparray = np.where(con, 1, 0)
-                con = (maparray == 0) & case3
-                maparray = np.where(con, 255, maparray)
+                con = case3 | case2
+                maparray = np.where(con, 255, 0)
+                con = (maparray == 0) & case1
+                maparray = np.where(con, 1, maparray)
                 maparray = np.where(data, maparray, 255)
                 if maparray.min() < 255:
                     closeraster(maparray, mod35map, ncols, nrows, gdal.GDT_Byte, 
@@ -592,7 +593,7 @@ def step5(y,m,d):
             ndsii = np.where(con, formula, 65535)
             # Restriction of ndsii sample to obtain Jenks breaks
             try:
-                con1 = con & (b7_array <= 100) & (tmp2_array == 1)
+                con1 = con & (b7_array <= 350) & (tmp2_array == 1)
                 ndsii_s = np.where(con1, ndsii, 65535)
                 sample = np.random.choice(ndsii_s[ndsii_s != 65535],50000)
                 classes = jenkspy.jenks_breaks(sample, 2)
@@ -671,7 +672,7 @@ def step6(y,m,d):
                 case3 = ((b4_array >= 1700) == False) & (ndsii < breaks)
                 # Classification
                 # 0 = water, 1 = ice, 255 = nodata
-                con = case1 ^ case2
+                con = case1 | case2
                 maparray = np.where(con, 1, 0)
                 con1 = (maparray == 0) & case3
                 maparray = np.where(con1, 255, maparray)
@@ -778,34 +779,27 @@ def step9(y,m):
             array = np.where(array == 255, 65535, array)
             case1 = ((m_array >= 65534) | (m_array == 0)) & (array == 0)
             case2 = (m_array >= 65534) & (array == 65534)
-            con1 = ((m_array >= 0) & (m_array < 65534)) & (array == 1)
-            con2 = ((array >= 0) & (array < 65534))
+            con1 = (m_array >= 0) & (m_array < 65534)
+            con2 = (array >= 0) & (array < 65534)
             case3 =  con1 & con2
             case4 = (m_array >= 65534) & (array == 1)
             m_array = np.where(case1, 0, m_array)
             m_array = np.where(case2, 65534, m_array)
-            m_array = np.where(case3, m_array+1, m_array)
+            m_array = np.where(case3, m_array+array, m_array)
             m_array = np.where(case4, 1, m_array)
-        closeraster(m_array, likelihood, ncols, nrows, gdal.GDT_UInt16, 65535, 
-                    trans)
-        
-    elif len(maplist) == 1 and not os.path.exists(likelihood):
-        m_array, nrows, ncols, trans, _ = openraster(maplist[0], np.uint16)
-        m_array = np.where(m_array == 254, 65534, m_array)
-        m_array = np.where(m_array == 255, 65535, m_array)
+        maximum = m_array[m_array < 65534].max()
+        perc = np.round((m_array/maximum)*100, decimals=0)
+        con = m_array < 65534
+        m_array = np.where(con, perc, m_array)
         closeraster(m_array, likelihood, ncols, nrows, gdal.GDT_UInt16, 65535, 
                     trans)
 
     # Creation of monthly extent map
-    if not os.path.exists(monthlymap):
-        # Normalization
+    if not os.path.exists(monthlymap) and len(maplist) > 1:
         m_array, nrows, ncols, trans, _ = openraster(likelihood, np.uint16)
         _ = None
-        maximum = m_array[m_array < 65534].max()
-        formula = np.round((m_array/maximum)*100, decimals=0)
-        m_array = np.where(m_array < 65534, formula, m_array)
         # Percent observations threshold
-        con = (m_array <= 5) & (m_array != 0)
+        con = (m_array < 10) & (m_array != 0)
         m_array = np.where(con, 65534, m_array)
         con = (m_array < 65534) & (m_array != 0)
         m_array = np.where(con, 1, m_array)
