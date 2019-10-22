@@ -1,5 +1,5 @@
 # IceMap500
-A sea ice detection algorithm based on IceMap250 (Gignac et al., 2017) with new features to generate accurate sea ice extent maps from MODIS visible and infrared data at 500 m resolution at nadir. (WORK IN PROGRESS)
+A sea ice detection algorithm based on IceMap250 (Gignac et al., 2017) with new features to generate accurate sea ice extent maps from MODIS visible and infrared data at 500 m resolution at nadir.
 
 ***********************************************************************************************************************************
 
