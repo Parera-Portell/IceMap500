@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-# icemap500.py (24/08/2018)
+# icemap500.py
 # Created in: May 2018
-# Authors: Joan A. Parera Portell (Universitat Autònoma de Barcelona)
+# Author: Joan A. Parera Portell (Universitat Autònoma de Barcelona)
 
 """
 *********************************ICEMAP500*************************************
@@ -9,6 +9,19 @@
 This script generates improved 500 m resolution sea ice extent maps from MODIS 
 imagery.
 Based on the IceMap250 algorithm (Gignac et al., 2017).
+
+Maps are projected in Lambert Azimuthal Equal Area, centred at latitudes 90 or 
+-90 depending on the hemisphere (EPSGs 102017 and 102020), using the WGS84
+ellipsoid.
+
+MODIS hdf data must be in a directory structured by year and month:
+    -->hdf_data
+        -->2019
+            -->03
+            
+The path to hdf_data will be the directory given to the script as an input. The
+intermediate files and results will be stored in a directory following the same
+year-month structure.
 
 *******************************************************************************
 """
@@ -35,6 +48,11 @@ except:
     print("Years not recognized. Exiting...")
     sys.exit()
     
+hemisphere = input("Hemisphere (N or S): ")
+if hemisphere != "N" or hemisphere != "S":
+    print("Hemisphere not recognized. Exiting...")
+    sys.exit()
+    
 studyarea = input("Enter path to study area shapefile: ")
 if not os.path.exists(studyarea):
     print("Study area shapefile not found. Exiting...")
@@ -43,6 +61,11 @@ if not os.path.exists(studyarea):
 heg_bin = input("Enter path to HEG bin folder: ")
 if not os.path.exists(heg_bin):
     print("HEG bin not found. Exiting...")
+    sys.exit()
+ 
+in_folder = input("Enter input data directory: ")
+if not os.path.exists(in_folder):
+    print("Input directory not found. Exiting...")
     sys.exit()
     
 out_folder = input("Enter directory where data will be stored: ")
@@ -53,18 +76,26 @@ if not os.path.exists(out_folder):
 
 #*********************************FOLDERS*************************************#
 
-hdfs = out_folder+"/data"
+hdfs = in_folder+"/data"
 bands = out_folder+"/bands"
 masks = out_folder+"/masks"
 maskedmaps = out_folder+"/maskedmaps"
 composites = out_folder+"/composites"
 workfolder = out_folder+"/workfolder"
 
+#********************************PROJECTION***********************************#
+
+if hemisphere == "N":
+    epsg = 102017
+    origin = "90.0"
+else:
+    epsg = 102020
+    origin = "-90.0"
 
 #***************************SUPPLEMENTARY FUNCTIONS***************************#
 
 def directories(year_list, month_list):
-    # This function creaties the output directories structure.
+    # This function creates the output directory structure.
     folders = [hdfs, bands, masks, maskedmaps, composites]
     for folder in folders:
         if not os.path.exists(folder):
@@ -84,16 +115,20 @@ def directories(year_list, month_list):
 
 def checkfiles(y,m,d):
     # This function checks whether all files for a given scene are available.
+    # Otherwise, files are renamed and excluded from analysis.
     infolder = hdfs+"/"+y+"/"+m
     for mod35hdf in glob.glob(infolder+"/MOD35_L2.A"+y+d+"*"):
         modhkm = glob.glob(infolder+"/MOD02HKM."+mod35hdf[-35:-22]+"*")
         mod1km = glob.glob(infolder+"/MOD021KM."+mod35hdf[-35:-22]+"*")
         if not modhkm or not mod1km:
-            os.remove(mod35hdf)
+            scene = mod35hdf.split("/")[-1]
+            os.rename(mod35hdf, infolder+"/NA_"+scene)
             if modhkm:
-                os.remove(modhkm[0])
+                scene = modhkm[0].split("/")[-1]
+                os.rename(modhkm[0], infolder+"/NA_"+scene)
             if mod1km:
-                os.remove(mod1km[0])
+                scene = mod1km[0].split("/")[-1]
+                os.rename(mod1km[0], infolder+"/NA_"+scene)
 
 def planck(radiance, wvln):
     # This function calculates brightness temperature (wvln in micrometers)
@@ -115,7 +150,7 @@ def closeraster(array, outfile, ncols, nrows, dtype, nodata, trans):
                                   dtype, options=["COMPRESS=LZW"])
     driver.SetGeoTransform(trans)
     srs = osr.SpatialReference()
-    srs.ImportFromEPSG(102017)
+    srs.ImportFromEPSG(epsg)
     driver.SetProjection(srs.ExportToWkt())
     driver.GetRasterBand(1).SetNoDataValue(nodata)
     driver.GetRasterBand(1).WriteArray(array)
@@ -162,8 +197,8 @@ def hdf_to_tif(infile, outfile, heg_bin, sds, bandnumber, res):
             "ELLIPSOID_CODE = WGS84\n" +
             "SPATIAL_SUBSET_UL_CORNER = ( " + maxy + " " + minx + " )\n" +
             "SPATIAL_SUBSET_LR_CORNER = ( " + miny + " " + maxx + " )\n" +
-            "OUTPUT_PROJECTION_PARAMETERS = ( 0.0 0.0 0.0 0.0 0 90.0 0.0 0.0 \
-0.0 0.0 0.0 0.0 0.0 0.0 0.0 )\n" +
+            "OUTPUT_PROJECTION_PARAMETERS = ( 0.0 0.0 0.0 0.0 0 "+origin+" 0.0 \
+0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 )\n" +
             "OUTPUT_PIXEL_SIZE_X = 500.0\n" +
             "OUTPUT_PIXEL_SIZE_Y = 500.0\n" +
             "OUTPUT_FILENAME = " + outfile + "\n" +
@@ -247,11 +282,11 @@ def mask_extraction(infile, outfile, bit_position, bit_length, value):
     closeraster(out_array, outfile, ncols, nrows, gdal.GDT_Byte, 255, trans)
     
 def clip(infile, outfile, shapefile, nodata, dtype):
-    # This functions clips a raster according to an input shapefile.
+    # This function clips a raster according to an input shapefile.
     gdal.Warp(outfile, infile, format = "GTiff", srcNodata = nodata,
                           dstNodata = nodata, cutlineDSName = shapefile, 
                           cropToCutline = True, outputType = dtype,
-                          xRes = 500, yRes = 500, dstSRS = "epsg:102017",
+                          xRes = 500, yRes = 500, dstSRS = "epsg:"+str(epsg),
                           creationOptions=["COMPRESS=LZW"])
     
 def to_ref(infile, outfile, zenith):
@@ -309,7 +344,7 @@ def step1(y,m,d):
             # Create sea regions mask for the given scene
             if not os.path.exists(seareg):
                 srs = osr.SpatialReference()
-                srs.ImportFromEPSG(102017)
+                srs.ImportFromEPSG(epsg)
                 proj = srs.ExportToWkt()
                 wbt.layer_footprint(mod35, index)
                 f = open(index[:-4]+".prj", "w"); f.write(proj); f.close()
