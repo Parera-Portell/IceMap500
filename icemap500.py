@@ -49,7 +49,7 @@ except:
     sys.exit()
     
 hemisphere = input("Hemisphere (N or S): ")
-if hemisphere != "N" or hemisphere != "S":
+if hemisphere != "N" and hemisphere != "S":
     print("Hemisphere not recognized. Exiting...")
     sys.exit()
     
