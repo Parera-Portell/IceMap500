@@ -842,14 +842,15 @@ def step9(y,m):
         # 0 = Nodata, 1 = Water, 2 = ice
         m_array = np.where(m_array == 1, 2, m_array)
         m_array = np.where(m_array == 0, 1, m_array)
-        m_array = np.where(m_array == 65534, 0, m_array)
+        data_array = m_array
+        m_array = np.where(m_array >= 65534, 0, m_array)
         closeraster(m_array, tmp, ncols, nrows, gdal.GDT_UInt16, 65535, trans)
         # Extent generation
         wbt.euclidean_allocation(tmp, monthlymap)
         os.remove(tmp)
         m_array, nrows, _, _, _ = openraster(monthlymap, np.uint16)
         _ = None
-        m_array = np.where(m_array == 65535, 255, m_array)
+        m_array = np.where(data_array == 65535, 255, m_array)
         closeraster(m_array, monthlymap, ncols, nrows, gdal.GDT_Byte, 255, trans)
         print("Monthly map created.")
 
