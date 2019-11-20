@@ -76,7 +76,7 @@ if not os.path.exists(out_folder):
 
 #*********************************FOLDERS*************************************#
 
-hdfs = in_folder+"/data"
+hdfs = in_folder
 bands = out_folder+"/bands"
 masks = out_folder+"/masks"
 maskedmaps = out_folder+"/maskedmaps"
