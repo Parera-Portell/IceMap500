@@ -7,7 +7,7 @@ Aiming at the creation of a European sea ice extent indicator, an improved sea i
 enlargement of the mapped area, the reduction of potential error sources and a qualitative improvement of the resulting maps.
 Quality assessment has shown this algorithm produces sea ice presence maps systematically achieving accuracies above 90 % (tested in the European Arctic).
 
-This algorithm is distributed as a Python 3 script adapted for Unix systems, requiring commonly used libraries such as numpy and gdal, alongside the jenkspy library and the WhiteboxTools Python geoprocessing utilities (https://jblindsay.github.io/ghrg/WhiteboxTools/index.html). Additional software is required to project MODIS swath data and correct the bowtie effect:
+This algorithm is distributed as a Python 3 script for Unix systems, requiring commonly used libraries such as numpy and gdal, alongside the jenkspy library and the WhiteboxTools Python geoprocessing utilities (https://jblindsay.github.io/ghrg/WhiteboxTools/index.html). Additional software is required to project MODIS swath data and correct the bowtie effect:
 
 -HEG Tool, https://newsroom.gsfc.nasa.gov/sdptoolkit/HEG/HEGHome.html
 
