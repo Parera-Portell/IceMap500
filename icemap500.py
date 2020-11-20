@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 # icemap500.py
 # Created in: May 2018
-# Author: Joan A. Parera Portell (Universitat Autònoma de Barcelona)
+# Author: Joan A. Parera Portell (Universitat Autònoma de Barcelona,
+# Universidad de Granada - Instituto Andaluz de Geofísica)
 
 """
 *********************************ICEMAP500*************************************
 
 This script generates improved 500 m resolution sea ice extent maps from MODIS 
 imagery.
-Based on the IceMap250 algorithm (Gignac et al., 2017).
 
 Maps are projected in Lambert Azimuthal Equal Area, centred at latitudes 90 or 
 -90 depending on the hemisphere (EPSGs 102017 and 102020), using the WGS84
@@ -29,7 +29,7 @@ year-month structure.
 # Import modules
 import numpy as np
 import glob, gdal, jenkspy, os, osr, subprocess, sys
-from WBT.whitebox_tools import WhiteboxTools
+from whitebox import WhiteboxTools
 wbt = WhiteboxTools()
 
 
