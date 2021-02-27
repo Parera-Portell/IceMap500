@@ -24,10 +24,15 @@ REQUIREMENTS
 
 -HEG Tool, https://newsroom.gsfc.nasa.gov/sdptoolkit/HEG/HEGHome.html
 
-INPUT FILES in hdf format
+
+INPUT FILES
+
   -MOD021KM
+  
   -MOD02HKM 
+  
   -MOD35_L2
+  
   
 MODIS original hdf data must be in a directory structured by year and month:
   -->in_dir
