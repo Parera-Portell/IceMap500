@@ -10,7 +10,7 @@ REQUIREMENTS
 
 -Python 3
 
-  With the following libraries:
+  Including the following libraries:
   
     -numpy
     
