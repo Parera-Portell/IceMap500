@@ -34,7 +34,7 @@ INPUT FILES
     -MOD35_L2
   
   
-MODIS original hdf data must be in a directory structured by year and month:
+MODIS original hdf data must be stored in a directory structured by year and month:
   
     -->data_dir
   
