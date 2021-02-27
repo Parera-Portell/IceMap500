@@ -36,7 +36,7 @@ INPUT FILES
   
 MODIS original hdf data must be in a directory structured by year and month:
   
-    -->in_dir
+    -->data_dir
   
         -->yyyy
       
