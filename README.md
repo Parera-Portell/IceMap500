@@ -9,11 +9,17 @@ See https://doi.org/10.5194/tc-2020-333 for technical details on the algorithm.
 REQUIREMENTS
 
 -Python 3
+
   With the following libraries:
+  
     -numpy
+    
     -gdal
+    
     -osr
+    
     -jenkspy
+    
     -whitebox
 
 -HEG Tool, https://newsroom.gsfc.nasa.gov/sdptoolkit/HEG/HEGHome.html
