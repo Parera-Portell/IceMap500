@@ -30,5 +30,5 @@ MODIS original hdf data must be in a directory structured by year and month:
 
 All output maps are projected in Lambert Azimuthal Equal Area.
 
-To run the script simply type *python3 [path]/icemap500.py* in the terminal. The script will automatically ask the
+To run the script simply type *python3 [path]/icemap500.py* in your terminal. The script will automatically ask the
 user for input and options.
