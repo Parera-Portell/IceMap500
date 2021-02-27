@@ -35,9 +35,12 @@ INPUT FILES
   
   
 MODIS original hdf data must be in a directory structured by year and month:
-  -->in_dir
-      -->yyyy
-          -->mm
+  
+    -->in_dir
+  
+        -->yyyy
+      
+            -->mm
 
 All output maps are projected in Lambert Azimuthal Equal Area.
 
