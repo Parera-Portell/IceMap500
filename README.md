@@ -1,19 +1,34 @@
 # IceMap500
-A sea ice detection algorithm based on IceMap250 (Gignac et al., 2017) with new features to generate accurate sea ice extent maps from MODIS visible and infrared data at 500 m resolution at nadir.
 
+A sea ice detection algorithm to map sea ice using MODIS visible and infrared data at 500 m resolution. Tested under Unix systems.
+
+Credits: Joan A. Parera-Portell, Raquel Ubach and Charles Gignac.
+See https://doi.org/10.5194/tc-2020-333 for technical details on the algorithm.
 ***********************************************************************************************************************************
 
-Aiming at the creation of a European sea ice extent indicator, an improved sea ice detection algorithm has been created, mainly based on the classification process used in IceMap250. A new method to correct the effects of NISE artefacts in the MODIS cloud mask and additional threshold tests allow the
-enlargement of the mapped area, the reduction of potential error sources and a qualitative improvement of the resulting maps.
-Quality assessment has shown this algorithm produces sea ice presence maps systematically achieving accuracies above 90 % (tested in the European Arctic).
+REQUIREMENTS
 
-This algorithm is distributed as a Python 3 script for Unix systems, and requires the following libraries: numpy, gdal, jenkspy, whitebox (check WhiteboxTools user's manual at https://jblindsay.github.io/ghrg/WhiteboxTools/index.html). Additional software is required to project MODIS swath data and correct the bowtie effect:
+-Python 3
+  With the following libraries:
+    -numpy
+    -gdal
+    -osr
+    -jenkspy
+    -whitebox
 
 -HEG Tool, https://newsroom.gsfc.nasa.gov/sdptoolkit/HEG/HEGHome.html
 
-Inputs are MOD021KM, MOD02HKM and MOD35_L2 hdf files.
+INPUT FILES in hdf format
+  -MOD021KM
+  -MOD02HKM 
+  -MOD35_L2
+  
+MODIS original hdf data must be in a directory structured by year and month:
+  -->in_dir
+      -->yyyy
+          -->mm
 
-***********************************************************************************************************************************
+All output maps are projected in Lambert Azimuthal Equal Area.
 
-Associated datasets: Parera-Portell, J.A., Ubach, R.  IceMap500 European maximum and minimum sea ice extent maps (2000-2019). Universitat Autònoma de
-Barcelona,  https://doi.org/10.5565/ddd.uab.cat/233396, 2020.
+To run the script simply type *python3 [path]/icemap500.py* in the terminal. The script will automatically ask the
+user for input and options.
