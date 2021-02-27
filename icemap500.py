@@ -56,53 +56,53 @@ tvis *= 1000
 
 #**************************USER-DEFINED VARIABLES******************************
 
-month_list = input("Months (numbers separated by commas): ").split(",")
+month_list = input("-Months (numbers separated by commas): ").split(",")
 try:
     month_list = [int(x) for x in month_list]
 except:
     print("Months not recognized. Exiting...")
     sys.exit()
     
-year_list = input("Years (separated by commas): ").split(",")
+year_list = input("-Years (separated by commas): ").split(",")
 try:
     year_list = [int(x) for x in year_list]
 except:
     print("Years not recognized. Exiting...")
     sys.exit()
     
-hemisphere = input("Hemisphere (N/S): ")
+hemisphere = input("-Hemisphere (N/S): ")
 if hemisphere not in ["N","n","S","s"]:
     print("Hemisphere not recognized. Exiting...")
     sys.exit()
 hemisphere.upper()
     
-studyarea = input("Enter path to study area shapefile: ")
+studyarea = input("-Enter path to study area shapefile: ")
 if not os.path.exists(studyarea):
     print("Study area shapefile not found. Exiting...")
     sys.exit()
     
-heg_bin = input("Enter path to HEG bin folder: ")
+heg_bin = input("-Enter path to HEG bin folder: ")
 if not os.path.exists(heg_bin):
     print("HEG bin not found. Exiting...")
     sys.exit()
  
-in_folder = input("Enter input data directory: ")
+in_folder = input("-Enter input data directory: ")
 if not os.path.exists(in_folder):
     print("Input directory not found. Exiting...")
     sys.exit()
     
-out_folder = input("Enter directory where data will be stored: ")
+out_folder = input("-Enter directory where data will be stored: ")
 if not os.path.exists(out_folder):
     print("Output directory not found. Exiting...")
     sys.exit()
 
-daym = input("Output daily map? (y/n) ")
+daym = input("-Output daily map? (y/n) ")
 if daym not in ["y","Y","n","N"]:
     print("Error reading answer. Exiting...")
     sys.exit()
 daym.lower()
     
-monthm = input("Output monthly map? (y/n) ")
+monthm = input("-Output monthly map? (y/n) ")
 if monthm not in ["y","Y","n","N"]:
     print("Error reading answer. Exiting...")
     sys.exit()
