@@ -1,39 +1,61 @@
 # -*- coding: utf-8 -*-
 # icemap500.py
 # Created in: May 2018
-# Author: Joan A. Parera Portell (Universitat Autònoma de Barcelona,
-# Universidad de Granada - Instituto Andaluz de Geofísica)
+# Author: Joan A. Parera Portell (Universitat Autònoma de Barcelona/
+# Universidad de Granada)
+# Credits: Joan A. Parera-Portell, Raquel Ubach and Charles Gignac
 
 """
 *********************************ICEMAP500*************************************
 
-This script generates improved 500 m resolution sea ice extent maps from MODIS 
-imagery.
+This script generates 500 m resolution sea ice extent maps from MODIS imagery.
+
+Input files:
+    MOD02HKM
+    MOD021KM
+    MOD35_L2
 
 Maps are projected in Lambert Azimuthal Equal Area, centred at latitudes 90 or 
 -90 depending on the hemisphere (EPSGs 102017 and 102020), using the WGS84
 ellipsoid.
 
-MODIS hdf data must be in a directory structured by year and month:
-    -->hdf_data
-        -->2019
-            -->03
+MODIS original hdf data must be in a directory structured by year and month:
+    -->in_dir
+        -->yyyy
+            -->mm
             
-The path to hdf_data will be the directory given to the script as an input. The
-intermediate files and results will be stored in a directory following the same
-year-month structure.
+The path to in_dir is given to the script as an input. Intermediate files 
+are stored in a directory following the same structure.
 
 *******************************************************************************
 """
 
 # Import modules
 import numpy as np
-import glob, gdal, jenkspy, os, osr, subprocess, sys
+import gdal, glob, jenkspy, os, osr, subprocess, sys
 from whitebox import WhiteboxTools
 wbt = WhiteboxTools()
 
+#******************************THRESHOLD VALUES*******************************#
+
+# B4 ToA reflectance
+tb4 = 17
+# B20 Sea Surface Temperature in ºC
+tb20 = 1
+# B7 ToA reflectance
+tb7 = 3.5
+# VIS mask standard score
+tvis = 0.5
+# Sea ice presence likelihood threshold
+silt = 10
+
+# Scaling - do NOT modify
+tb4 *= 100
+tb7 *= 100
+tvis *= 1000
 
 #**************************USER-DEFINED VARIABLES******************************
+
 month_list = input("Months (numbers separated by commas): ").split(",")
 try:
     month_list = [int(x) for x in month_list]
@@ -48,10 +70,11 @@ except:
     print("Years not recognized. Exiting...")
     sys.exit()
     
-hemisphere = input("Hemisphere (N or S): ")
-if hemisphere != "N" and hemisphere != "S":
+hemisphere = input("Hemisphere (N/S): ")
+if hemisphere not in ["N","n","S","s"]:
     print("Hemisphere not recognized. Exiting...")
     sys.exit()
+hemisphere.upper()
     
 studyarea = input("Enter path to study area shapefile: ")
 if not os.path.exists(studyarea):
@@ -73,10 +96,21 @@ if not os.path.exists(out_folder):
     print("Output directory not found. Exiting...")
     sys.exit()
 
+daym = input("Output daily map? (y/n) ")
+if daym not in ["y","Y","n","N"]:
+    print("Error reading answer. Exiting...")
+    sys.exit()
+daym.lower()
+    
+monthm = input("Output monthly map? (y/n) ")
+if monthm not in ["y","Y","n","N"]:
+    print("Error reading answer. Exiting...")
+    sys.exit()
+monthm.lower()
 
 #*********************************FOLDERS*************************************#
 
-hdfs = in_folder
+hdfs = in_folder+"/data"
 bands = out_folder+"/bands"
 masks = out_folder+"/masks"
 maskedmaps = out_folder+"/maskedmaps"
@@ -91,7 +125,7 @@ if hemisphere == "N":
 else:
     epsg = 102020
     origin = "-90.0"
-
+    
 #***************************SUPPLEMENTARY FUNCTIONS***************************#
 
 def directories(year_list, month_list):
@@ -504,8 +538,8 @@ def step3(y,m,d):
             score = (index-mean)/std
             vis = np.where(con, score*1000, 65535)
             # Classification
-            # 0 = cloud, 1 = clear
-            con3 = np.where(vis <= 500, 1, 0)
+            # 0 = no visibility, 1 = visibility
+            con3 = np.where(vis <= tvis, 1, 0)
             vis_array = np.where(vis != 65535, con3, 255)
             closeraster(vis_array, vismask, ncols, nrows, gdal.GDT_Byte, 255, 
                         trans)        
@@ -535,7 +569,7 @@ def step4(y,m,d):
             formula = (b4_array - b2_array)/(b4_array + b2_array)
             ndsii = np.where(con, formula, 65535)
             try:
-                sample = np.random.choice(ndsii[ndsii != 65535],50000)
+                sample = np.random.choice(ndsii[ndsii != 65535],25000)
                 classes = jenkspy.jenks_breaks(sample, 2)
                 breaks = classes[1]
                 # Conversion to sea surface temperature
@@ -545,7 +579,7 @@ def step4(y,m,d):
                 con = (b4_array != 65535) & (b20_array != 65535)
                 data = con & (m_array == 1) & (ndsii != 65535)
                 # Classification outcomes
-                test = (b20_array <= 1) & (b4_array >= 1700) # SST + green refl.
+                test = (b20_array <= tb20) & (b4_array >= tb4) # SST + green refl.
                 case1 = test & (ndsii < breaks)
                 case2 = test & (ndsii >= breaks)
                 case3 = (test == False) & (ndsii < breaks)
@@ -626,18 +660,17 @@ def step5(y,m,d):
             # Calculation of NDSII-2 and Jenks breaks
             formula = (b4_array - b2_array)/(b4_array + b2_array)
             ndsii = np.where(con, formula, 65535)
-            # Restriction of ndsii sample to obtain Jenks breaks
             try:
-                con1 = con & (b7_array <= 350) & (tmp2_array == 1)
+                con1 = con & (b7_array <= tb7) & (tmp2_array == 1)
                 ndsii_s = np.where(con1, ndsii, 65535)
-                sample = np.random.choice(ndsii_s[ndsii_s != 65535],50000)
+                sample = np.random.choice(ndsii_s[ndsii_s != 65535],25000)
                 classes = jenkspy.jenks_breaks(sample, 2)
                 breaks = classes[1]
             except:
                 try:
                     con1 = con & (tmp2_array == 1)
                     ndsii_s = np.where(con1, ndsii, 65535)
-                    sample = np.random.choice(ndsii_s[ndsii_s != 65535],50000)
+                    sample = np.random.choice(ndsii_s[ndsii_s != 65535],25000)
                     classes = jenkspy.jenks_breaks(sample, 2)
                     breaks = classes[1]
                 except:
@@ -650,7 +683,7 @@ def step5(y,m,d):
                     n=1    
             # Classification outcomes
             if n == 0:
-                test = (b7_array <= 350) & (b4_array >= 1700) & (b20_array <= 1)
+                test = (b7_array <= tb7) & (b4_array >= tb4) & (b20_array <= tb20)
                 test = test & (tmp2_array == 1) & (tmp_array == 0)
                 test = test & (ndsii < breaks) & (m35_array != 0)
                 # Classification
@@ -702,12 +735,10 @@ def step6(y,m,d):
                 # Exclusion of nodata areas
                 data = (b4_array != 65535) & (ndsii != 65535) & (v_array == 1)
                 # Classification outcomes
-                case1 = (b4_array >= 1700) & (ndsii < breaks)
-                case2 = (b4_array >= 1700) & (ndsii >= breaks)
-                case3 = ((b4_array >= 1700) == False) & (ndsii < breaks)
+                con = (b4_array >= tb4)
+                case3 = (b4_array < tb4) & (ndsii < breaks)
                 # Classification
                 # 0 = water, 1 = ice, 255 = nodata
-                con = case1 | case2
                 maparray = np.where(con, 1, 0)
                 con1 = (maparray == 0) & case3
                 maparray = np.where(con1, 255, maparray)
@@ -834,7 +865,7 @@ def step9(y,m):
         m_array, nrows, ncols, trans, _ = openraster(likelihood, np.uint16)
         _ = None
         # Percent observations threshold
-        con = (m_array < 10) & (m_array != 0)
+        con = (m_array < silt) & (m_array != 0)
         m_array = np.where(con, 65534, m_array)
         con = (m_array < 65534) & (m_array != 0)
         m_array = np.where(con, 1, m_array)
@@ -857,7 +888,6 @@ def step9(y,m):
     
 
 #***************************SCRIPT INITIALIZATION*****************************#
-
 def run():
     directories(year_list, month_list)
     for d in days_range:
@@ -871,10 +901,12 @@ def run():
             step5(y,m,d)
             step6(y,m,d)
             step7(y,m,d)
-            step8(y,m,d)
+            if daym == "y":
+                step8(y,m,d)
     monthlymap = composites+"/"+y+"/"+m+"/A"+y+".month_"+m+".tif"
     if not os.path.exists(monthlymap):
-        step9(y,m)
+        if monthm == "y":
+            step9(y,m)
 
 month_days = {1:range(1,32),2:range(32,61),3:range(60,92),4:range(91,122),
               5:range(121,153),6:range(152,183),7:range(182,214),
@@ -887,4 +919,3 @@ for y in year_list:
         m = str("{:02d}".format(month))
         y = str(y)
         run()
-        
