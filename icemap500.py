@@ -27,6 +27,8 @@ MODIS original hdf data must be in a directory structured by year and month:
 The path to in_dir is given to the script as an input. Intermediate files 
 are stored in a directory following the same structure.
 
+Outputs are the swath map and (optional) daily and monthly maps.
+
 *******************************************************************************
 """
 
@@ -56,6 +58,12 @@ tvis *= 1000
 
 #**************************USER-DEFINED VARIABLES******************************
 
+print("\n********************************************")
+print("*********** WELCOME TO ICEMAP500 ***********")
+print("********************************************")
+print("Written by J.A. Parera Portell.")
+print("Designed by J.A. Parera Portell, Raquel Ubach and Charles Gignac.\n")
+
 month_list = input("-Months (numbers separated by commas): ").split(",")
 try:
     month_list = [int(x) for x in month_list]
@@ -74,7 +82,6 @@ hemisphere = input("-Hemisphere (N/S): ")
 if hemisphere not in ["N","n","S","s"]:
     print("Hemisphere not recognized. Exiting...")
     sys.exit()
-hemisphere.upper()
     
 studyarea = input("-Enter path to study area shapefile: ")
 if not os.path.exists(studyarea):
@@ -95,12 +102,20 @@ out_folder = input("-Enter directory where data will be stored: ")
 if not os.path.exists(out_folder):
     print("Output directory not found. Exiting...")
     sys.exit()
+    
+sat = input("-Enter MODIS Terra (0) or Aqua (1): ")
+if sat not in ["0","1"]:
+    print("Sensor not recognized. Exiting...")
+    sys.exit()
+if sat == "0":
+    sat = "O"
+else:
+    sat = "Y"
 
 daym = input("-Output daily map? (y/n) ")
 if daym not in ["y","Y","n","N"]:
     print("Error reading answer. Exiting...")
     sys.exit()
-daym.lower()
     
 monthm = input("-Output monthly map? (y/n) ")
 if monthm not in ["y","Y","n","N"]:
@@ -110,16 +125,17 @@ monthm.lower()
 
 #*********************************FOLDERS*************************************#
 
-hdfs = in_folder+"/data"
+hdfs = in_folder
 bands = out_folder+"/bands"
 masks = out_folder+"/masks"
 maskedmaps = out_folder+"/maskedmaps"
 composites = out_folder+"/composites"
 workfolder = out_folder+"/workfolder"
+trashlist = []
 
 #********************************PROJECTION***********************************#
 
-if hemisphere == "N":
+if hemisphere in ["N","n"]:
     epsg = 102017
     origin = "90.0"
 else:
@@ -130,7 +146,7 @@ else:
 
 def directories(year_list, month_list):
     # This function creates the output directory structure.
-    folders = [hdfs, bands, masks, maskedmaps, composites]
+    folders = [bands, masks, maskedmaps, composites]
     for folder in folders:
         if not os.path.exists(folder):
             os.makedirs(folder)
@@ -149,20 +165,13 @@ def directories(year_list, month_list):
 
 def checkfiles(y,m,d):
     # This function checks whether all files for a given scene are available.
-    # Otherwise, files are renamed and excluded from analysis.
+    # Otherwise, files are excluded from analysis.
     infolder = hdfs+"/"+y+"/"+m
-    for mod35hdf in glob.glob(infolder+"/MOD35_L2.A"+y+d+"*"):
-        modhkm = glob.glob(infolder+"/MOD02HKM."+mod35hdf[-35:-22]+"*")
-        mod1km = glob.glob(infolder+"/MOD021KM."+mod35hdf[-35:-22]+"*")
+    for mod35hdf in glob.glob(infolder+"/M"+sat+"D35_L2.A"+y+d+"*"):
+        modhkm = glob.glob(infolder+"/M"+sat+"D02HKM."+mod35hdf[-35:-22]+"*")
+        mod1km = glob.glob(infolder+"/M"+sat+"D021KM."+mod35hdf[-35:-22]+"*")
         if not modhkm or not mod1km:
-            scene = mod35hdf.split("/")[-1]
-            os.rename(mod35hdf, infolder+"/NA_"+scene)
-            if modhkm:
-                scene = modhkm[0].split("/")[-1]
-                os.rename(modhkm[0], infolder+"/NA_"+scene)
-            if mod1km:
-                scene = mod1km[0].split("/")[-1]
-                os.rename(mod1km[0], infolder+"/NA_"+scene)
+            trashlist.append(mod35hdf)
 
 def planck(radiance, wvln):
     # This function calculates brightness temperature (wvln in micrometers)
@@ -260,7 +269,7 @@ def hdf_to_tif(infile, outfile, heg_bin, sds, bandnumber, res):
         array_ref = np.round(array_ref, decimals=0)
         closeraster(array_ref, outfile, ncols, nrows, gdal.GDT_UInt16, nodata, 
                     trans)
-        print("MOD02HKM converted to TOA reflectance*cos(solar zenith).")
+        print("M"+sat+"D02HKM converted to TOA reflectance*cos(solar zenith).")
     
     # Convert SI to brightness temperture
     elif res == 1000:
@@ -281,10 +290,10 @@ def hdf_to_tif(infile, outfile, heg_bin, sds, bandnumber, res):
         array_temp = np.round(array_temp, decimals=0)
         closeraster(array_temp, outfile, ncols, nrows, gdal.GDT_UInt16, nodata, 
                     trans)
-        print("MOD021KM converted to brightness temperature.")
+        print("M"+sat+"D021KM converted to brightness temperature.")
         
     elif res == 0:
-        print("MOD35 converted to tif.")
+        print("M"+sat+"D35 converted to tif.")
         
     # Create and fill solar zenith raster
     else:
@@ -348,7 +357,15 @@ def to_ref(infile, outfile, zenith):
 def step1(y,m,d):   
     infolder = hdfs+"/"+y+"/"+m
     checkfiles(y,m,d)
-    for mod35hdf in glob.glob(infolder+"/MOD35_L2.A"+y+d+"*"):
+    filelist = glob.glob(infolder+"/M"+sat+"D35_L2.A"+y+d+"*")
+    # De not process scenes which lack some file
+    try:
+        for e in trashlist:
+            filelist.remove(e)
+    except ValueError:
+        pass
+    
+    for mod35hdf in filelist:
         mod35 = bands+"/"+y+"/"+m+"/"+mod35hdf[-35:-22]+".MOD35.tif"
         index = workfolder+"/index.shp"
         seareg = masks+"/"+y+"/"+m+"/"+mod35hdf[-35:-22]+".seareg_clip.shp"
@@ -433,9 +450,10 @@ def step1(y,m,d):
                 for i in [seareg[:-4]+".prj", seareg[:-4]+".qpj", 
                           seareg[:-4]+".dbf", seareg[:-4]+".shp", 
                           seareg[:-4]+".shx", szenith, szenith+".met", mod35,
-                          mod35+".met", mod35hdf]:
+                          mod35+".met"]:
                     if os.path.exists(i):
                         os.remove(i)
+                trashlist.append(mod35hdf)
             
             # Delete temporal files
             for i in [cloud, night, glint, sea, mask]:
@@ -452,8 +470,8 @@ def step1(y,m,d):
     
 def step2(y,m,d):
     infolder = hdfs+"/"+y+"/"+m
-    mod02hkm = glob.glob(infolder+"/MOD02HKM.A"+y+d+"*")
-    mod021km = glob.glob(infolder+"/MOD021KM.A"+y+d+"*")
+    mod02hkm = glob.glob(infolder+"/M"+sat+"D02HKM.A"+y+d+"*")
+    mod021km = glob.glob(infolder+"/M"+sat+"D021KM.A"+y+d+"*")
     tmp = workfolder+"/temp.tif"
     
     # Solar reflective bands
@@ -901,12 +919,16 @@ def run():
             step5(y,m,d)
             step6(y,m,d)
             step7(y,m,d)
-            if daym == "y":
+            if daym in ["y","Y"]:
                 step8(y,m,d)
+        else:
+            print("Daily map ("+str(d)+"-"+str(y)+") already exists.")
     monthlymap = composites+"/"+y+"/"+m+"/A"+y+".month_"+m+".tif"
     if not os.path.exists(monthlymap):
-        if monthm == "y":
+        if monthm in ["y","Y"]:
             step9(y,m)
+    else:
+        print("Monthly map already exists.")
 
 month_days = {1:range(1,32),2:range(32,61),3:range(60,92),4:range(91,122),
               5:range(121,153),6:range(152,183),7:range(182,214),
