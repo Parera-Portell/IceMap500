@@ -16,8 +16,6 @@ REQUIREMENTS
     
     -gdal
     
-    -osr
-    
     -jenkspy
     
     -whitebox
@@ -27,11 +25,11 @@ REQUIREMENTS
 
 INPUT FILES
 
-    -MOD021KM
+    -MOD021KM / MYD021KM
 
-    -MOD02HKM 
+    -MOD02HKM / MYD02HKM
 
-    -MOD35_L2
+    -MOD35_L2 / MYD35_L2
   
   
 MODIS original hdf data must be stored in a directory structured by year and month:
