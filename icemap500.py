@@ -34,7 +34,8 @@ Outputs are the swath map and (optional) daily and monthly maps.
 
 # Import modules
 import numpy as np
-import gdal, glob, jenkspy, os, osr, subprocess, sys
+import glob, jenkspy, os, subprocess, sys
+from osgeo import gdal, osr
 from whitebox import WhiteboxTools
 wbt = WhiteboxTools()
 
