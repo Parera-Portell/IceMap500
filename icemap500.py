@@ -194,7 +194,7 @@ def closeraster(array, outfile, ncols, nrows, dtype, nodata, trans):
                                   dtype, options=["COMPRESS=LZW"])
     driver.SetGeoTransform(trans)
     srs = osr.SpatialReference()
-    srs.ImportFromESRI(["epsg"])
+    srs.ImportFromESRI([str(epsg)])
     driver.SetProjection(srs.ExportToWkt())
     driver.GetRasterBand(1).SetNoDataValue(nodata)
     driver.GetRasterBand(1).WriteArray(array)
