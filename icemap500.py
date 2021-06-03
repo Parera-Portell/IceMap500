@@ -194,7 +194,7 @@ def closeraster(array, outfile, ncols, nrows, dtype, nodata, trans):
                                   dtype, options=["COMPRESS=LZW"])
     driver.SetGeoTransform(trans)
     srs = osr.SpatialReference()
-    srs.ImportFromEPSG(epsg)
+    srs.ImportFromESRI(["epsg"])
     driver.SetProjection(srs.ExportToWkt())
     driver.GetRasterBand(1).SetNoDataValue(nodata)
     driver.GetRasterBand(1).WriteArray(array)
@@ -330,7 +330,7 @@ def clip(infile, outfile, shapefile, nodata, dtype):
     gdal.Warp(outfile, infile, format = "GTiff", srcNodata = nodata,
                           dstNodata = nodata, cutlineDSName = shapefile, 
                           cropToCutline = True, outputType = dtype,
-                          xRes = 500, yRes = 500, dstSRS = "epsg:"+str(epsg),
+                          xRes = 500, yRes = 500, dstSRS = "ESRI:"+str(epsg),
                           creationOptions=["COMPRESS=LZW"])
     
 def to_ref(infile, outfile, zenith):
