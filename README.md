@@ -3,7 +3,7 @@
 A sea ice detection algorithm to map sea ice using MODIS visible and infrared data at 500 m resolution. Tested under Unix systems.
 
 Credits: Joan A. Parera-Portell, Raquel Ubach and Charles Gignac.
-See https://doi.org/10.5194/tc-2020-333 for technical details on the algorithm.
+See https://doi.org/10.5194/tc-15-2803-2021 for technical details on the algorithm.
 ***********************************************************************************************************************************
 
 REQUIREMENTS
