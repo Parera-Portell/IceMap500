@@ -14,7 +14,7 @@ REQUIREMENTS
   
     -numpy
     
-    -gdal
+    -osgeo
     
     -jenkspy
     
