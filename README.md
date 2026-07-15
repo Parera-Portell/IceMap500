@@ -11,16 +11,13 @@ REQUIREMENTS
 -Python 3
 
   Including the following libraries:
-  
-    -numpy
     
-    -osgeo
-    
+    -gdal
+    -osr
     -jenkspy
-    
     -whitebox
 
--HEG Tool, https://newsroom.gsfc.nasa.gov/sdptoolkit/HEG/HEGHome.html
+-HEG Tool, https://wiki.earthdata.nasa.gov/spaces/DAS/pages/170800220/HEG+HDF-EOS+to+GeoTIFF+Conversion+Tool
 
 
 INPUT FILES
