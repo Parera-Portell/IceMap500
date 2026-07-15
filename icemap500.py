@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # icemap500.py
 # Created in: May 2018
@@ -15,7 +16,7 @@ Input files:
     MOD021KM
     MOD35_L2
 
-Maps are projected in Lambert Azimuthal Equal Area, centred at latitudes 90 or 
+Maps are projected in Lambert Azimuthal Equal Area, centred at latitudes 90 or
 -90 depending on the hemisphere (EPSGs 102017 and 102020), using the WGS84
 ellipsoid.
 
@@ -23,8 +24,8 @@ MODIS original hdf data must be in a directory structured by year and month:
     -->in_dir
         -->yyyy
             -->mm
-            
-The path to in_dir is given to the script as an input. Intermediate files 
+
+The path to in_dir is given to the script as an input. Intermediate files
 are stored in a directory following the same structure.
 
 Outputs are the swath map and (optional) daily and monthly maps.
@@ -34,10 +35,9 @@ Outputs are the swath map and (optional) daily and monthly maps.
 
 # Import modules
 import numpy as np
-import glob, jenkspy, os, subprocess, sys
-from osgeo import gdal, osr
-from whitebox import WhiteboxTools
-wbt = WhiteboxTools()
+from osgeo import gdal,osr
+import glob, jenkspy, os, subprocess, sys, whitebox
+wbt = whitebox.WhiteboxTools()
 
 #******************************THRESHOLD VALUES*******************************#
 
